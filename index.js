@@ -259,7 +259,7 @@ exports.handler = async (event) => {
         return { statusCode: 500, body: JSON.stringify({ message: error.message }) };
     }
 };
-//
+
 async function getGameState(gameId) {
     const params = {
         TableName: gameTableName,
