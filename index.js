@@ -205,7 +205,6 @@ function advanceGameStage(game) {
 }
 
 function allPlayersHaveActed(game) {
-    console.log(game);
     const isInitialRound = game.gameStage === GAME_STAGES.PRE_FLOP;
 
     const activePlayers = game.players.filter(player => player.inHand);
@@ -314,7 +313,7 @@ async function saveGameState(gameId, game) {
         ExpressionAttributeValues: {
             ":p": game.players,
             ":bS": game.bettingStarted,
-            "mRA": game.minimumRaiseAmount,
+            ":mRA": game.minimumRaiseAmount,
             ":pot": game.pot,
             ":gs": game.gameStage,
             ":ct": game.currentTurn,
