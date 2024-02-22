@@ -205,6 +205,7 @@ function advanceGameStage(game) {
 }
 
 function allPlayersHaveActed(game) {
+    console.log(game);
     const isInitialRound = game.gameStage === GAME_STAGES.PRE_FLOP;
 
     const activePlayers = game.players.filter(player => player.inHand);
