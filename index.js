@@ -204,6 +204,42 @@ function advanceGameStage(game) {
     }
 }
 
+function allPlayersHaveActed(game) {
+    const isInitialRound = game.gameStage === GAME_STAGES.PRE_FLOP;
+
+    const activePlayers = game.players.filter(player => player.inHand);
+
+    // Check if all active players have matched the highest bet or are all-in
+    const allMatchedOrAllIn = activePlayers.every(player =>
+        player.chips === 0 ||
+        player.bet === game.highestBet
+    );
+
+    if (isInitialRound) {
+        const bigBlindIndex = (game.smallBlindIndex + 1) % game.players.length;
+        const bigBlindPlayer = game.players[bigBlindIndex];
+
+        // Check if the big blind has had the opportunity to act
+        const bigBlindHadOpportunityToAct = bigBlindPlayer && (bigBlindPlayer.hasActed || bigBlindPlayer.bet !== game.highestBet);
+
+        // For the initial round, all players must have matched the highest bet or be all-in,
+        // and the big blind must have had the opportunity to act
+        return allMatchedOrAllIn && bigBlindHadOpportunityToAct;
+    } else {
+        // For subsequent rounds, check if betting has started
+        if (game.bettingStarted) {
+            // If betting has started, all players must have matched the highest bet or be all-in
+            return allMatchedOrAllIn;
+        } else {
+            // If betting hasn't started, check if all players have acted (checked or folded)
+            return game.players.every(player =>
+                !player.inHand ||
+                player.hasActed
+            );
+        }
+    }
+}
+
 exports.handler = async (event) => {
     const { gameId, playerId } = JSON.parse(event.body);
     const connectionId = event.requestContext.connectionId;
@@ -247,10 +283,10 @@ exports.handler = async (event) => {
         await saveGameState(gameId, game);
         await notifyAllPlayers(gameId, game);
         
-        return { statusCode: 200, body: 'Call action processed.' };
+        return { statusCode: 200, body: 'Check action processed.' };
     } catch (error) {
-        console.error('Error processing playerCall:', error);
-        // Optionally, send an error message back to the caller
+        console.error('Error processing playerCheck:', error);
+        // Optionally, send an error message back to the checker
         await apiGatewayManagementApi.postToConnection({
             ConnectionId: connectionId,
             Data: JSON.stringify({ error: error.message })
@@ -290,12 +326,18 @@ async function saveGameState(gameId, game) {
     await dynamoDb.update(params).promise();
 }
 
-
 async function notifyAllPlayers(gameId, game) {
     // Retrieve all connection IDs for this game from the connections table
     const connectionData = await dynamoDb.scan({ TableName: connectionsTableName, FilterExpression: "gameId = :gameId", ExpressionAttributeValues: { ":gameId": gameId } }).promise();
     const postCalls = connectionData.Items.map(async ({ connectionId }) => {
-        await apiGatewayManagementApi.postToConnection({ ConnectionId: connectionId, Data: JSON.stringify(game) }).promise();
+        await apiGatewayManagementApi.postToConnection({ 
+            ConnectionId: connectionId,
+             Data: JSON.stringify({
+                game: game,
+                action: "playerCheck",
+                statusCode: 200
+            }) 
+        }).promise();
     });
     await Promise.all(postCalls);
 }
