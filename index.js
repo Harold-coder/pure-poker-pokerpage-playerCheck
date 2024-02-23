@@ -83,6 +83,8 @@ function determineWinner(game) {
 
     game.pot = 0;
     game.gameStage = GAME_STAGES.GAME_OVER;
+    game.gameInProgress = false;
+    game.gameOverTimeStamp = new Date().toISOString();
 }
 
 function check(playerId, players, highestBet) {
@@ -309,9 +311,10 @@ async function saveGameState(gameId, game) {
     const params = {
         TableName: gameTableName,
         Key: { gameId },
-        UpdateExpression: "SET players = :p, bettingStarted = :bS, minRaiseAmount = :mRA, deck = :deck, pot = :pot, gameStage = :gs, currentTurn = :ct, communityCards = :cc, highestBet = :hb, gameInProgress = :gip, netWinners = :nw",
+        UpdateExpression: "SET players = :p, gameOverTimeStamp = :gOTS, bettingStarted = :bS, minRaiseAmount = :mRA, deck = :deck, pot = :pot, gameStage = :gs, currentTurn = :ct, communityCards = :cc, highestBet = :hb, gameInProgress = :gip, netWinners = :nw",
         ExpressionAttributeValues: {
             ":p": game.players,
+            ":gOTS": game.gameOverTimeStamp,
             ":bS": game.bettingStarted,
             ":mRA": game.minRaiseAmount,
             ":pot": game.pot,
