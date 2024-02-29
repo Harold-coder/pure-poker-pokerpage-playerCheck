@@ -1,8 +1,8 @@
 //index.js
 const AWS = require('aws-sdk');
 const dynamoDb = new AWS.DynamoDB.DocumentClient();
-const Deck = require('./Deck');
-const { evaluateBestHand, compareHands } = require('./HandEvaluator');
+const Deck = require('Deck');
+const { evaluateBestHand, compareHands } = require('HandEvaluator');
 const gameTableName = process.env.GAME_TABLE;
 const connectionsTableName = process.env.CONNECTIONS_TABLE;
 const apiGatewayManagementApi = new AWS.ApiGatewayManagementApi({
